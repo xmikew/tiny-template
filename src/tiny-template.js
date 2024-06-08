@@ -33,7 +33,7 @@ TinyTemplate.prototype.render_if_json = function(key, data) {
 }
 
 TinyTemplate.prototype.interpolate = function(expr, name, data) {
-    self = this;
+    var self = this;
     var res = name.split('.').reduce(function(obj, key) {
         var regex = /^\s*([\p{L}0-9_-]+)\[\s*(\d+)\s*\]\s*$/ui;
         if ( (match = regex.exec(key)) !== null) {
