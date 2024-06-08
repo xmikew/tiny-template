@@ -43,6 +43,30 @@ describe('TinyTemplate', function() {
         var tinyTemplate = new TinyTemplate(template);
         var result = tinyTemplate.render(data);
 
+        assert.strictEqual(result, expected);
+    });
+
+    it('should handle nested object and array interpolation', function() {
+        var template = "My details are: Name - ${user.name}, Age - ${user.age}, Child - ${user.children[0].name}";
+        var data = { user: { name: "Bob", age: 25, children: [{ name: "Susan", age: 10}, {name: "Bobby", age: 10}] }};
+        var expected = "My details are: Name - Bob, Age - 25, Child - Susan";
+
+        var tinyTemplate = new TinyTemplate(template);
+        var result = tinyTemplate.render(data);
+
+        assert.strictEqual(result, expected);
+    });
+
+    it('should handle nested object and array interpolation and unicode', function() {
+        var template = "My details are: Name - ${user.𝖓𝖆𝖒𝖊}, Age - ${user.age}, Child - ${user.children[0].name}";
+        var data = { user: { 𝖓𝖆𝖒𝖊: "𝐁𝐨𝐛", age: 25, children: [{ name: "𝕾𝖚𝖘𝖆𝖓", age: 10}, {name: "Bobby", age: 10}] }};
+        var expected = "My details are: Name - 𝐁𝐨𝐛, Age - 25, Child - 𝕾𝖚𝖘𝖆𝖓";
+
+        var tinyTemplate = new TinyTemplate(template);
+        var result = tinyTemplate.render(data);
+
+        assert.strictEqual(result, expected);
+    });
 
     it('should allow for custom function to be registered', function() {
         var template = "My details are: Name - ${ user.name }, ${script:test}";
@@ -52,6 +76,5 @@ describe('TinyTemplate', function() {
         tinyTemplate.register_script('test', function() { return "<this is the custom part>"});
         var result = tinyTemplate.render(data);
         assert.strictEqual(result, expected);
-
     });
 });

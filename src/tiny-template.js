@@ -20,6 +20,13 @@ TinyTemplate.prototype.get_script = function(name) {
 
 TinyTemplate.prototype.interpolate = function(expr, name, data) {
     var res = name.split('.').reduce(function(obj, key) {
+        var regex = /^\s*([\p{L}0-9_-]+)\[\s*(\d+)\s*\]\s*$/ui;
+        if ( (match = regex.exec(key)) !== null) {
+            // array matching
+            var key = match[1];
+            var index = match[2];
+            return obj && obj[key] && obj[key][index];
+        }
         return obj && obj[key];
     }, data);
     return res;
