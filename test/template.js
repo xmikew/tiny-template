@@ -77,4 +77,15 @@ describe('TinyTemplate', function() {
         var result = tinyTemplate.render(data);
         assert.strictEqual(result, expected);
     });
+
+    it('should allow for decoding json fields', function() {
+        var template = "My details are: Name - ${user.name}, Age - ${user.age}, Child - ${user.children[0].name}";
+        var data = { user: { name: "Bob", age: 25, children: '[{"name": "Susan", "age":10}, {"name": "Bobby", "age": 10}]' }};
+        var expected = "My details are: Name - Bob, Age - 25, Child - Susan";
+
+        var tinyTemplate = new TinyTemplate(template, ['children']);
+        var result = tinyTemplate.render(data);
+
+        assert.strictEqual(result, expected);
+    });
 });

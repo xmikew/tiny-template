@@ -1,7 +1,13 @@
-function TinyTemplate(template) {
+function TinyTemplate(template, json_fields) {
     this.function_prefix = "script:";
     this.template = template;
     this.registry = {};
+
+    if (json_fields === undefined) {
+        this.json_fields = [];
+    } else {
+        this.json_fields = json_fields;
+    }
 }
 
 TinyTemplate.prototype.register_script = function(name, f) {
@@ -18,15 +24,26 @@ TinyTemplate.prototype.get_script = function(name) {
     return undefined;
 }
 
+TinyTemplate.prototype.render_if_json = function(key, data) {
+    if (this.json_fields.indexOf(key) >= 0 && typeof(data[key] === "string")) {
+        return {[key]: JSON.parse(data[key])};
+    } else {
+        return data;
+    }
+}
+
 TinyTemplate.prototype.interpolate = function(expr, name, data) {
+    self = this;
     var res = name.split('.').reduce(function(obj, key) {
         var regex = /^\s*([\p{L}0-9_-]+)\[\s*(\d+)\s*\]\s*$/ui;
         if ( (match = regex.exec(key)) !== null) {
             // array matching
             var key = match[1];
             var index = match[2];
+            obj = self.render_if_json(key, obj)
             return obj && obj[key] && obj[key][index];
         }
+        obj = self.render_if_json(key, obj)
         return obj && obj[key];
     }, data);
     return res;
