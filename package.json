@@ -4,12 +4,12 @@
   },
   "name": "tiny-template",
   "description": "A tiny templating engine.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "template.js",
   "directories": {
     "test": "test"
   },
-  "dependencies": { },
+  "dependencies": {},
   "scripts": {
     "test": "mocha"
   },
