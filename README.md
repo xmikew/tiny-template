@@ -49,6 +49,26 @@ var data = {children: '[{"name": "Jane"}, {"name": "Bobby"}]'};
 tinyTemplate.render(data);
 ```
 
+* Aliases
+
+```
+var tinyTemplate = new TinyTemplate("${short_name.key_value_finally}");
+tinyTemplate.alias('short_name', 'some.very.long[0].references[0]')
+var res = tinyTemplate.render({
+    'some': {
+        'very': {
+            'long': [{
+                'references': [{
+                    'key_value_finally': 'woot',
+                    'some_other_key': 'yipee'
+                }],
+            }],
+        }
+    }
+});
+// console.log(res); # woot
+```
+
 See test/template.js for more example usages
 
 ## Contributing
