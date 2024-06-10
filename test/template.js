@@ -1,4 +1,13 @@
 var assert = require('assert');
+
+global.Class = {
+    create: function() {
+        return function() {
+            this.initialize & this.initialize.apply(this, arguments);
+        };
+    }
+};
+
 var TinyTemplate = require('../src/tiny-template.js');
 
 describe('TinyTemplate', function() {
