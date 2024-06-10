@@ -1,5 +1,26 @@
 {
   "devDependencies": {
     "mocha": "^10.3.0"
-  }
+  },
+  "name": "tiny-template",
+  "description": "A tiny templating engine.",
+  "version": "1.0.0",
+  "main": "template.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": { },
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xmikew/tiny-template.git"
+  },
+  "author": "Mike Wisener",
+  "license": "Apache 2.0",
+  "bugs": {
+    "url": "https://github.com/xmikew/tiny-template/issues"
+  },
+  "homepage": "https://github.com/xmikew/tiny-template#readme"
 }
