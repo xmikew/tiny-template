@@ -3,8 +3,10 @@ var tinyTemplate = Class.create();
 tinyTemplate.prototype = {
     initialize: function(template, json_fields) {
         this.function_prefix = "script:";
+        this.alias_prefix = "alias:";
         this.template = template;
         this.registry = {};
+        this.aliases = {};
 
         if (json_fields === undefined) {
             this.json_fields = [];
@@ -27,9 +29,39 @@ tinyTemplate.prototype = {
         return undefined;
     },
 
+    alias: function(name, path) {
+        this.aliases[name] = path;
+    },
+
+    get_alias: function(name) {
+        if (name.startsWith(this.alias_prefix)) {
+            var name_no_prefix = name.replace(this.alias_prefix, "");
+            if (this.aliases.hasOwnProperty(name_no_prefix)) {
+                return this.aliases[name_no_prefix];
+            }
+        }
+        return undefined;
+    },
+
+    expand_aliases: function(name) {
+        var self = this;
+        var expanded = [];
+        name.split('.').map(function(val) {
+            var alias_key = self.get_alias(val);
+            if (alias_key) {
+                expanded.push(alias_key);
+            } else {
+                expanded.push(val);
+            }
+        });
+        return expanded.join('.');
+    },
+
     render_if_json: function(key, data) {
         if (this.json_fields.indexOf(key) >= 0 && typeof(data[key] === "string")) {
-            return {[key]: JSON.parse(data[key])};
+            var ret = {};
+            ret[key] = JSON.parse(data[key]);
+            return ret;
         } else {
             return data;
         }
@@ -38,15 +70,15 @@ tinyTemplate.prototype = {
     interpolate: function(expr, name, data) {
         var self = this;
         var res = name.split('.').reduce(function(obj, key) {
-            var regex = /^\s*([\p{L}0-9_-]+)\[\s*(\d+)\s*\]\s*$/ui;
-            if ( (match = regex.exec(key)) !== null) {
+            var arr_regex = /^\s*([a-zA-Z0-9_-]+)\[\s*(\d+)\s*\]\s*$/i;
+            if ( (match = arr_regex.exec(key)) !== null) {
                 // array matching
-                var key = match[1];
+                var key_name = match[1];
                 var index = match[2];
-                obj = self.render_if_json(key, obj)
-                return obj && obj[key] && obj[key][index];
+                obj = self.render_if_json(key_name, obj);
+                return obj && obj[key_name] && obj[key_name][index];
             }
-            obj = self.render_if_json(key, obj)
+            obj = self.render_if_json(key, obj);
             return obj && obj[key];
         }, data);
         return res;
@@ -55,8 +87,8 @@ tinyTemplate.prototype = {
     render: function(data) {
         var self = this;
 
-        var regex = /([ ]*(\$\{\s*([^}]+)\s*\})\s*)/i;
-        while (( match = regex.exec(this.template)) !== null) {
+        var identifier_regex = /([ ]*(\$\{\s*([^}]+)\s*\})\s*)/i;
+        while (( match = identifier_regex.exec(this.template)) !== null) {
             var expr = match[2];
             var name = match[3].trim();
             this.template = this.template.replace(expr, function(match) {
@@ -64,7 +96,7 @@ tinyTemplate.prototype = {
                 if (f) {
                     return f(expr, name, data);
                 } else {
-                    return self.interpolate(expr, name, data);
+                    return self.interpolate(expr, self.expand_aliases(name), data);
                 }
             });
         }
