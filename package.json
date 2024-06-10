@@ -1,5 +1,6 @@
 {
   "devDependencies": {
+    "eslint": "^9.4.0",
     "mocha": "^10.3.0"
   },
   "name": "tiny-template",
@@ -9,7 +10,6 @@
   "directories": {
     "test": "test"
   },
-  "dependencies": {},
   "scripts": {
     "test": "mocha"
   },
