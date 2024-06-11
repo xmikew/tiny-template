@@ -52,7 +52,7 @@ tinyTemplate.render(data);
 * Aliases
 
 ```
-var tinyTemplate = new TinyTemplate("${short_name.key_value_finally}");
+var tinyTemplate = new TinyTemplate("${alias:short_name.key_value_finally}");
 tinyTemplate.alias('short_name', 'some.very.long[0].references[0]')
 var res = tinyTemplate.render({
     'some': {
@@ -67,6 +67,14 @@ var res = tinyTemplate.render({
     }
 });
 // console.log(res); # woot
+```
+
+* Null coalesce
+```
+var tinyTemplate = new TinyTemplate("${user.full_name ?? user.name}");
+var data = { user: { name: "Bob"} };
+tinyTemplate.render(data);
+// Bob
 ```
 
 See test/template.js for more example usages
