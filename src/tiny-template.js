@@ -97,8 +97,8 @@ tinyTemplate.prototype = {
                     var name_id = names[i];
                     var f = self.get_script(name_id);
                     if (f) {
-                        var res = f(expr, name_id, data);
-                        if (res) return res;
+                        var res_f = f(data, expr, name_id);
+                        if (res_f) return res_f;
                     } else {
                         var res = self.interpolate(expr, self.expand_aliases(name_id), data);
                         if (res) return res;
