@@ -147,4 +147,13 @@ describe('TinyTemplate', function() {
         assert.strictEqual(result, expected);
     });
 
+    it('should throw error if you attempt to register non-function', function() {
+        var tinyTemplate = new TinyTemplate("test data");
+        assert.throws(
+            function() {
+                tinyTemplate.register_script('does_not_exist', undefined);
+            },
+            Error
+        );
+    });
 });

@@ -16,6 +16,10 @@ tinyTemplate.prototype = {
     },
 
     register_script: function(name, f) {
+        if (typeof f !== 'function') {
+            throw new Error("register_script: attempt to register non-function");
+        }
+
         this.registry[name] = f;
     },
 
