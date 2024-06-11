@@ -87,17 +87,24 @@ tinyTemplate.prototype = {
     render: function(data) {
         var self = this;
 
-        var identifier_regex = /([ ]*(\$\{\s*([^}]+)\s*\})\s*)/i;
+        var identifier_regex = /(\s*(\$\{\s*([^}]+)\s*\})\s*)/i;
         while (( match = identifier_regex.exec(this.template)) !== null) {
             var expr = match[2];
             var name = match[3].trim();
             this.template = this.template.replace(expr, function(match) {
-                var f = self.get_script(name);
-                if (f) {
-                    return f(expr, name, data);
-                } else {
-                    return self.interpolate(expr, self.expand_aliases(name), data);
+                var names = name.split(/\s*\?\?\s*/);
+                for (var i=0; i<names.length; i++) {
+                    var name_id = names[i];
+                    var f = self.get_script(name_id);
+                    if (f) {
+                        var res = f(expr, name_id, data);
+                        if (res) return res;
+                    } else {
+                        var res = self.interpolate(expr, self.expand_aliases(name_id), data);
+                        if (res) return res;
+                    }
                 }
+                return "";
             });
         }
         return this.template;

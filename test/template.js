@@ -113,13 +113,38 @@ describe('TinyTemplate', function() {
     it('should allow aliases to be used error', function() {
         var template = "My details are: Name - ${user.name}, Age - ${user.age}, Child - ${alias:first_child_name}";
         var data = { user: { name: "Bob", age: 25, children: '[{"name": "Susan", "age":10}, {"name": "Bobby", "age": 10}]' }};
-        var expected = "My details are: Name - Bob, Age - 25, Child - " + undefined;
+        var expected = "My details are: Name - Bob, Age - 25, Child - ";
 
         var tinyTemplate = new TinyTemplate(template, ['children']);
         tinyTemplate.alias('first_child_name', 'user.children[3].name')
         var result = tinyTemplate.render(data);
 
         assert.strictEqual(result, expected);
-    })
+    });
+
+    it('should support null coalesce operation', function() {
+        var template = "My details are: Name - ${user.name2 ?? user.name}, Age - ${user.age}, Child - ${alias:first_child_name}";
+        var data = { user: { name: "Bob", age: 25, children: '[{"name": "Susan", "age":10}, {"name": "Bobby", "age": 10}]' }};
+        var expected = "My details are: Name - Bob, Age - 25, Child - Susan";
+
+        var tinyTemplate = new TinyTemplate(template, ['children']);
+        tinyTemplate.alias('first_child_name', 'user.children[0].name')
+        var result = tinyTemplate.render(data);
+
+        assert.strictEqual(result, expected);
+    });
+
+    it('should all work together', function() {
+        var template = "My details are: Name - ${user.name2 ?? user.name}, Age - ${user.age}, Child - ${user.children[3] ?? alias:first_child_name}, custom - ${script:test}";
+        var data = { user: { name: "Bob", age: 25, children: '[{"name": "Susan", "age":10}, {"name": "Bobby", "age": 10}]' }};
+        var expected = "My details are: Name - Bob, Age - 25, Child - Susan, custom - <this is the custom part>";
+
+        var tinyTemplate = new TinyTemplate(template, ['children']);
+        tinyTemplate.register_script('test', function() { return "<this is the custom part>"});
+        tinyTemplate.alias('first_child_name', 'user.children[0].name')
+        var result = tinyTemplate.render(data);
+
+        assert.strictEqual(result, expected);
+    });
 
 });
