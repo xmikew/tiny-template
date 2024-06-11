@@ -31,10 +31,11 @@ Supports following:
 ```
 var template = "My custom script: ${script:custom}";
 var tinyTemplate = new TinyTemplate(template);
-tinyTemplate.register_script('custom', function(expr, name, data) {
+tinyTemplate.register_script('custom', function(data, expr, name) {
+    //data = data currently being rendered
     //expr = ${script:custom}
     //name = custom
-    //data = data currently being rendered
+    
     return "some calculated thing from data";
 });
 tinyTemplate.render(...);
