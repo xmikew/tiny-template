@@ -88,10 +88,20 @@ tinyTemplate.prototype = {
         return res;
     },
 
-    render: function(data) {
+    validate: function(errs) {
+        if (errs.length > 0) {
+            var err = "validate: Failed to replace all template variables. Got " + errs.length + " errors:\n";
+            err += errs.join("\n");
+            throw new Error(err);
+        }
+        return true;
+    },
+
+    render: function(data, validate) {
         var self = this;
 
         var identifier_regex = /(\s*(\$\{\s*([^}]+)\s*\})\s*)/i;
+        var errs = [];
         while (( match = identifier_regex.exec(this.template)) !== null) {
             var expr = match[2];
             var name = match[3].trim();
@@ -108,9 +118,15 @@ tinyTemplate.prototype = {
                         if (res) return res;
                     }
                 }
+                errs.push("Failed to replace var " + expr + " in template");
                 return "";
             });
         }
+
+        if (validate) {
+            self.validate(errs);
+        }
+
         return this.template;
     },
 
