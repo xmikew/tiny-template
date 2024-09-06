@@ -35,7 +35,7 @@ tinyTemplate.register_script('custom', function(data, expr, name) {
     //data = data currently being rendered
     //expr = ${script:custom}
     //name = custom
-    
+
     return "some calculated thing from data";
 });
 tinyTemplate.render(...);
