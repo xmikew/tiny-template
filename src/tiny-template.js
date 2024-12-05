@@ -5,6 +5,8 @@ tinyTemplate.prototype = {
         this.function_prefix = "script:";
         this.alias_prefix = "alias:";
         this.template = template;
+        this.interpolate_failure = "";
+        this.last_errors = [];
         this.registry = {};
         this.aliases = {};
 
@@ -89,18 +91,27 @@ tinyTemplate.prototype = {
     },
 
     validate: function(errs) {
-        if (errs.length > 0) {
-            var err = "validate: Failed to replace all template variables. Got " + errs.length + " errors:\n";
-            err += errs.join("\n");
+        err = this.get_error_str(errs);
+        if (err) {
             throw new Error(err);
         }
         return true;
+    },
+
+    get_error_str(errs) {
+        var err = "";
+        if (errs.length > 0) {
+            var err = "validate: Failed to replace all template variables. Got " + errs.length + " errors:\n";
+            err += errs.join("\n");
+        }
+        return err;
     },
 
     render: function(data, validate) {
         var self = this;
 
         var identifier_regex = /(\s*(\$\{\s*([^}]+)\s*\})\s*)/i;
+        self.last_errors = [];
         var errs = [];
         while (( match = identifier_regex.exec(this.template)) !== null) {
             var expr = match[2];
@@ -119,10 +130,11 @@ tinyTemplate.prototype = {
                     }
                 }
                 errs.push("Failed to replace var " + expr + " in template");
-                return "";
+                return self.interpolate_failure ? self.interpolate_failure : "";
             });
         }
 
+        self.last_errors = errs;
         if (validate) {
             self.validate(errs);
         }

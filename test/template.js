@@ -184,4 +184,33 @@ describe('TinyTemplate', function() {
             Error
         );
      });
+
+    it("should replace interpolate_failure if it does not interpolate", function() {
+        var template = "My details are: Name - ${user.name}";
+        var data = { user: { no_name: "Bob" } };
+        var expected = "My details are: Name - NO_VALUE_FOUND";
+
+        var tinyTemplate = new TinyTemplate(template);
+        tinyTemplate.interpolate_failure = "NO_VALUE_FOUND";
+        var result = tinyTemplate.render(data);
+
+        assert.strictEqual(result, expected);
+
+     });
+
+    it("should return proper error string upon failure", function() {
+        var template = "My details are: Name - ${user.name}";
+        var data = { user: { no_name: "Bob" } };
+        var expected = "My details are: Name - ";
+
+        var tinyTemplate = new TinyTemplate(template);
+        var result = tinyTemplate.render(data);
+
+        assert.strictEqual(result, expected);
+        var err = tinyTemplate.get_error_str(tinyTemplate.last_errors);
+        var expected_error = "validate: Failed to replace all template variables. Got 1 errors:\nFailed to replace var ${user.name} in template";
+
+        assert.strictEqual(err, expected_error);
+
+    });
  });
