@@ -98,10 +98,10 @@ tinyTemplate.prototype = {
         return true;
     },
 
-    get_error_str(errs) {
+    get_error_str: function(errs) {
         var err = "";
         if (errs.length > 0) {
-            var err = "validate: Failed to replace all template variables. Got " + errs.length + " errors:\n";
+            err = "validate: Failed to replace all template variables. Got " + errs.length + " errors:\n";
             err += errs.join("\n");
         }
         return err;
