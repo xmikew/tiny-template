@@ -187,11 +187,11 @@ describe('TinyTemplate', function() {
 
     it("should replace interpolate_failure if it does not interpolate", function() {
         var template = "My details are: Name - ${user.name}";
+        var expected = "My details are: Name - ${user.name}";
         var data = { user: { no_name: "Bob" } };
-        var expected = "My details are: Name - NO_VALUE_FOUND";
 
         var tinyTemplate = new TinyTemplate(template);
-        tinyTemplate.interpolate_failure = "NO_VALUE_FOUND";
+        tinyTemplate.interpolate_failure_as_blank = false;
         var result = tinyTemplate.render(data);
 
         assert.strictEqual(result, expected);

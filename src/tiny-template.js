@@ -5,7 +5,7 @@ tinyTemplate.prototype = {
         this.function_prefix = "script:";
         this.alias_prefix = "alias:";
         this.template = template;
-        this.interpolate_failure = "";
+        this.interpolate_failure_as_blank = true;
         this.last_errors = [];
         this.registry = {};
         this.aliases = {};
@@ -110,7 +110,7 @@ tinyTemplate.prototype = {
     render: function(data, validate) {
         var self = this;
 
-        var identifier_regex = /(\s*(\$\{\s*([^}]+)\s*\})\s*)/i;
+        var identifier_regex = /(\s*[^\\](\$\{\s*([^}]+)\s*\})\s*)/i;
         self.last_errors = [];
         var errs = [];
         while (( match = identifier_regex.exec(this.template)) !== null) {
@@ -130,7 +130,10 @@ tinyTemplate.prototype = {
                     }
                 }
                 errs.push("Failed to replace var " + expr + " in template");
-                return self.interpolate_failure ? self.interpolate_failure : "";
+
+                // prevents infinite loop with keeping ${var} in the template
+                // regex won't process vars that are escaped with \ (i.e. \${my_var})
+                return self.interpolate_failure_as_blank ? "" : "\\" + expr;
             });
         }
 
@@ -139,7 +142,7 @@ tinyTemplate.prototype = {
             self.validate(errs);
         }
 
-        return this.template;
+        return this.template.replace("\\$", "$");
     },
 
     type: 'tinyTemplate'
