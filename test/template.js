@@ -134,6 +134,19 @@ describe('TinyTemplate', function() {
         assert.strictEqual(result, expected);
     });
 
+
+    it('should support null coalesce operation with existing key', function() {
+        var template = "My details are: Name - ${user.empty_attr ?? 'test \' test'}, Age - ${user.age}, Child - ${alias:first_child_name}";
+        var data = { user: { name: "Bob", empty_attr: "", age: 25, children: '[{"name": "Susan", "age":10}, {"name": "Bobby", "age": 10}]' }};
+        var expected = "My details are: Name - test ' test, Age - 25, Child - Susan";
+
+        var tinyTemplate = new TinyTemplate(template, ['children']);
+        tinyTemplate.alias('first_child_name', 'user.children[0].name')
+        var result = tinyTemplate.render(data);
+
+        assert.strictEqual(result, expected);
+    });
+
     it('should all work together', function() {
         var template = "My details are: Name - ${user.name2 ?? user.name}, Age - ${user.age}, Child - ${user.children[3] ?? alias:first_child_name}, custom - ${script:test}";
         var data = { user: { name: "Bob", age: 25, children: '[{"name": "Susan", "age":10}, {"name": "Bobby", "age": 10}]' }};

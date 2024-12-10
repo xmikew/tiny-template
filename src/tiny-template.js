@@ -111,6 +111,8 @@ tinyTemplate.prototype = {
         var self = this;
 
         var identifier_regex = /(\s*[^\\](\$\{\s*([^}]+)\s*\})\s*)/i;
+        var string_regex = /^\s*(["'])((?:\\.|[^\\])*?)\1\s*$/;
+
         self.last_errors = [];
         var errs = [];
         while (( match = identifier_regex.exec(this.template)) !== null) {
@@ -120,6 +122,10 @@ tinyTemplate.prototype = {
                 var names = name.split(/\s*\?\?\s*/);
                 for (var i=0; i<names.length; i++) {
                     var name_id = names[i];
+                    if (match = name_id.match(string_regex)) {
+                        return match[2];
+                    }
+
                     var f = self.get_script(name_id);
                     if (f) {
                         var res_f = f(data, expr, name_id);
