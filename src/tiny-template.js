@@ -122,7 +122,7 @@ tinyTemplate.prototype = {
                 var names = name.split(/\s*\?\?\s*/);
                 for (var i=0; i<names.length; i++) {
                     var name_id = names[i];
-                    if (match = name_id.match(string_regex)) {
+                    if ((match = name_id.match(string_regex))) {
                         return match[2];
                     }
 
