@@ -226,4 +226,28 @@ describe('TinyTemplate', function() {
         assert.strictEqual(err, expected_error);
 
     });
+
+
+    it("should allow search of array of objects", function() {
+        var template = "My details are: Name - ${user.name}, job is ${user.attributes[key=job].value}";
+        var data = { user: { name: "Bob", attributes: [{key: "job", value: "devops"}, {key: "level", value: "i8"}] } };
+        var expected = "My details are: Name - Bob, job is devops";
+
+        var tinyTemplate = new TinyTemplate(template);
+        var result = tinyTemplate.render(data);
+
+        assert.strictEqual(result, expected);
+    });
+
+    it("should handle not error of array of objects when not array", function() {
+        var template = "My details are: Name - ${user.name}, job is ${user.attributes[key=job].value}";
+        var data = { user: { name: "Bob", attributes: {key: "job"} } };
+        var expected = "My details are: Name - Bob, job is ";
+
+        var tinyTemplate = new TinyTemplate(template);
+        var result = tinyTemplate.render(data);
+
+        assert.strictEqual(result, expected);
+    });
+
  });

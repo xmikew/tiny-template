@@ -78,6 +78,15 @@ tinyTemplate.render(data);
 // Bob
 ```
 
+* Array of Dict lookups
+```
+var tinyTemplate = new TinyTemplate("${user.attributes[key=department].value}");
+var data = { user: { name: "Bob", attributes:[ {key: "department", value: "finance"}, {key: "title", value: "cro"} ] } };
+tinyTemplate.render(data);
+// finance
+```
+
+
 See test/template.js for more example usages
 
 ## Contributing

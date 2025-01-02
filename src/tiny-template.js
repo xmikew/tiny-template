@@ -77,12 +77,29 @@ tinyTemplate.prototype = {
         var self = this;
         var res = name.split('.').reduce(function(obj, key) {
             var arr_regex = /^\s*([a-zA-Z0-9_-]+)\[\s*(\d+)\s*\]\s*$/i;
+            var dict_regex = /^\s*([a-zA-Z0-9]+)\s*\[\s*["']?\s*([a-zA-Z0-9_-]+)\s*['"]?\s*=\s*['"]?\s*([a-zA-Z0-9_-]+)\s*['"]?\s*\]\s*$/i;
             if ( (match = arr_regex.exec(key)) !== null) {
                 // array matching
                 var key_name = match[1];
                 var index = match[2];
                 obj = self.render_if_json(key_name, obj);
                 return obj && obj[key_name] && obj[key_name][index];
+            }
+            else if ( (match = dict_regex.exec(key)) !== null) {
+                // dict lookup matching
+                var key_name = match[1];
+                var index_name = match[2];
+                var index_match_val = match[3];
+                try {
+                    var search_array = obj[key_name];
+                    for (var i=0; i<search_array.length; i++) {
+                        if (search_array[i][index_name] == index_match_val) {
+                            return search_array[i];
+                        }
+                    }
+                } catch (e) {
+                    return "";
+                }
             }
             obj = self.render_if_json(key, obj);
             return obj && obj[key];
