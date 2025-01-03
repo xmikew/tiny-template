@@ -1,3 +1,4 @@
+//Encoding: UTF-8
 var assert = require('assert');
 
 global.Class = {

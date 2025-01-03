@@ -1,17 +1,23 @@
 {
-  "devDependencies": {
-    "eslint": "^9.4.0",
-    "mocha": "^10.3.0"
-  },
   "name": "tiny-template",
   "description": "A tiny templating engine.",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "main": "src/tiny-template.js",
   "directories": {
     "test": "test"
   },
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.2.0",
+    "@eslint/js": "^9.17.0",
+    "eslint": "^9.17.0",
+    "eslint-plugin-mocha": "^10.5.0",
+    "globals": "^15.14.0",
+    "mocha": "^10.3.0"
   },
   "repository": {
     "type": "git",

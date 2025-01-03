@@ -78,6 +78,7 @@ tinyTemplate.prototype = {
         var res = name.split('.').reduce(function(obj, key) {
             var arr_regex = /^\s*([a-zA-Z0-9_-]+)\[\s*(\d+)\s*\]\s*$/i;
             var dict_regex = /^\s*([a-zA-Z0-9]+)\s*\[\s*["']?\s*([a-zA-Z0-9_-]+)\s*['"]?\s*=\s*['"]?\s*([a-zA-Z0-9_-]+)\s*['"]?\s*\]\s*$/i;
+            var match;
             if ( (match = arr_regex.exec(key)) !== null) {
                 // array matching
                 var key_name = match[1];
@@ -87,16 +88,17 @@ tinyTemplate.prototype = {
             }
             else if ( (match = dict_regex.exec(key)) !== null) {
                 // dict lookup matching
-                var key_name = match[1];
-                var index_name = match[2];
+                var var_name = match[1];
+                var lookup_name = match[2];
                 var index_match_val = match[3];
                 try {
-                    var search_array = obj[key_name];
+                    var search_array = obj[var_name];
                     for (var i=0; i<search_array.length; i++) {
-                        if (search_array[i][index_name] == index_match_val) {
+                        if (search_array[i][lookup_name] == index_match_val) {
                             return search_array[i];
                         }
                     }
+                // eslint-disable-next-line no-unused-vars
                 } catch (e) {
                     return "";
                 }
@@ -108,7 +110,7 @@ tinyTemplate.prototype = {
     },
 
     validate: function(errs) {
-        err = this.get_error_str(errs);
+        var err = this.get_error_str(errs);
         if (err) {
             throw new Error(err);
         }
@@ -132,6 +134,7 @@ tinyTemplate.prototype = {
 
         self.last_errors = [];
         var errs = [];
+        var match;
         while (( match = identifier_regex.exec(this.template)) !== null) {
             var expr = match[2];
             var name = match[3].trim();
