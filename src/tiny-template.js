@@ -78,6 +78,8 @@ tinyTemplate.prototype = {
         var res = name.split('.').reduce(function(obj, key) {
             var arr_regex = /^\s*([a-zA-Z0-9_-]+)\[\s*(\d+)\s*\]\s*$/i;
             var dict_regex = /^\s*([a-zA-Z0-9]+)\s*\[\s*["']?\s*([a-zA-Z0-9_-]+)\s*['"]?\s*=\s*['"]?\s*([a-zA-Z0-9_-]+)\s*['"]?\s*\]\s*$/i;
+            var exists_regex = /^\s*([a-zA-Z0-9]+)\s*\[\s*["']?\s*key\s*['"]?\s*=\s*['"]?\s*([a-zA-Z0-9_-]+)\s*['"]?\s*\?\s*\](\[\s*(\d+)\s*\]\s*)?\s*$/i;
+            //var exists_regex = /^([a-zA-Z0-9]+)\[key=([a-zA-Z0-9_-]+)\?\]$/i;
             if ( (match = arr_regex.exec(key)) !== null) {
                 // array matching
                 var key_name = match[1];
@@ -95,6 +97,25 @@ tinyTemplate.prototype = {
                     for (var i=0; i<search_array.length; i++) {
                         if (search_array[i][index_name] == index_match_val) {
                             return search_array[i];
+                        }
+                    }
+                } catch (e) {
+                    return "";
+                }
+            }
+            else if ( (match = exists_regex.exec(key)) !== null) {
+                var obj_name = match[1];
+                var key_search = match[2];
+                var array_index = match[4]
+                try {
+                    var search_arr = obj[obj_name];
+                    for (var j=0; j<search_arr.length; j++) {
+                        if (search_arr[j].hasOwnProperty(key_search)) {
+                            if (array_index !== undefined) {
+                                return search_arr[j][key_search][parseInt(array_index, 10)];
+                            } else {
+                                return search_arr[j][key_search];
+                            }
                         }
                     }
                 } catch (e) {

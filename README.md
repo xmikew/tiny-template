@@ -87,6 +87,15 @@ tinyTemplate.render(data);
 ```
 
 
+* Array of Dict lookups with Exists operator
+```
+var tinyTemplate = new TinyTemplate("${user.attributes[key=references?][0].name}");
+var data = { user: { name: "Bob", attributes:[ {key_name: "department", value: "finance"}, {references: [{name: "john"}] } ] } };
+tinyTemplate.render(data);
+// john
+```
+
+
 See test/template.js for more example usages
 
 ## Contributing
