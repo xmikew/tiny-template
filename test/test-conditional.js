@@ -23,7 +23,7 @@ describe('TinyTemplate', function() {
     });
 
     // New Tests for Conditional Logic 
-    it('should process conditional logic correctly (if without else, truthy)', function() {
+    it('should process conditional logic correctly (if without else, truth)', function() {
         var template = "Status: ${if loggedIn}Welcome back!${endif}";
         var data = { loggedIn: true };
         var expected = "Status: Welcome back!";
@@ -34,7 +34,7 @@ describe('TinyTemplate', function() {
         assert.strictEqual(result, expected);
     });
 
-    it('should process conditional logic correctly (if without else, falsy)', function() {
+    it('should process conditional logic correctly (if without else, false)', function() {
         var template = "Status: ${if loggedIn}Welcome back!${endif}";
         var data = { loggedIn: false };
         var expected = "Status: ";
@@ -45,7 +45,7 @@ describe('TinyTemplate', function() {
         assert.strictEqual(result, expected);
     });
 
-    it('should process conditional logic correctly (if with else, truthy)', function() {
+    it('should process conditional logic correctly (if with else, truth)', function() {
         var template = "Status: ${if loggedIn}Welcome back!${else}Please log in.${endif}";
         var data = { loggedIn: true };
         var expected = "Status: Welcome back!";
@@ -56,7 +56,7 @@ describe('TinyTemplate', function() {
         assert.strictEqual(result, expected);
     });
 
-    it('should process conditional logic correctly (if with else, falsy)', function() {
+    it('should process conditional logic correctly (if with else, false)', function() {
         var template = "Status: ${if loggedIn}Welcome back!${else}Please log in.${endif}";
         var data = { loggedIn: false };
         var expected = "Status: Please log in.";
