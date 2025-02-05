@@ -21,7 +21,6 @@ tinyTemplate.prototype = {
         if (typeof f !== 'function') {
             throw new Error("register_script: attempt to register non-function");
         }
-
         this.registry[name] = f;
     },
 
@@ -80,21 +79,23 @@ tinyTemplate.prototype = {
             var dict_regex = /^\s*([a-zA-Z0-9]+)\s*\[\s*["']?\s*([a-zA-Z0-9_-]+)\s*['"]?\s*=\s*['"]?\s*([a-zA-Z0-9_-]+)\s*['"]?\s*\]\s*$/i;
             var exists_regex = /^\s*([a-zA-Z0-9]+)\s*\[\s*["']?\s*key\s*['"]?\s*=\s*['"]?\s*([a-zA-Z0-9_-]+)\s*['"]?\s*\?\s*\](\[\s*(\d+)\s*\]\s*)?\s*$/i;
             //var exists_regex = /^([a-zA-Z0-9]+)\[key=([a-zA-Z0-9_-]+)\?\]$/i;
-            if ( (match = arr_regex.exec(key)) !== null) {
+            if ((match = arr_regex.exec(key)) !== null) {
                 // array matching
+
                 var key_name = match[1];
                 var index = match[2];
                 obj = self.render_if_json(key_name, obj);
                 return obj && obj[key_name] && obj[key_name][index];
             }
-            else if ( (match = dict_regex.exec(key)) !== null) {
-                // dict lookup matching
+            else if ((match = dict_regex.exec(key)) !== null) {
+            // dict lookup matching
+
                 var key_name = match[1];
                 var index_name = match[2];
                 var index_match_val = match[3];
                 try {
                     var search_array = obj[key_name];
-                    for (var i=0; i<search_array.length; i++) {
+                    for (var i = 0; i < search_array.length; i++) {
                         if (search_array[i][index_name] == index_match_val) {
                             return search_array[i];
                         }
@@ -103,13 +104,13 @@ tinyTemplate.prototype = {
                     return "";
                 }
             }
-            else if ( (match = exists_regex.exec(key)) !== null) {
+            else if ((match = exists_regex.exec(key)) !== null) {
                 var obj_name = match[1];
                 var key_search = match[2];
-                var array_index = match[4]
+                var array_index = match[4];
                 try {
                     var search_arr = obj[obj_name];
-                    for (var j=0; j<search_arr.length; j++) {
+                    for (var j = 0; j < search_arr.length; j++) {
                         if (search_arr[j].hasOwnProperty(key_search)) {
                             if (array_index !== undefined) {
                                 return search_arr[j][key_search][parseInt(array_index, 10)];
@@ -145,20 +146,40 @@ tinyTemplate.prototype = {
         return err;
     },
 
+    // New Methods 
+    evaluateCondition: function(condition, data) {
+        var val = this.interpolate("", this.expand_aliases(condition.trim()), data);
+        return !!val;
+    },
+    processConditionals: function(template, data) {
+        var self = this;
+        //regex
+        var conditionalRe = /\$\{\s*if\s+([^}]+)\s*\}([\s\S]*?)(?:\$\{\s*else\s*\}([\s\S]*?))?\$\{\s*endif\s*\}/g;
+        return template.replace(conditionalRe, function(match, condition, truePart, falsePart) {
+            if (self.evaluateCondition(condition, data)) {
+                return truePart;
+            } else {
+                return falsePart || "";
+            }
+        });
+    },
+
+    // End New Method 
     render: function(data, validate) {
         var self = this;
+        this.template = this.processConditionals(this.template, data);
 
         var identifier_regex = /(\s*[^\\](\$\{\s*([^}]+)\s*\})\s*)/i;
         var string_regex = /^\s*(["'])((?:\\.|[^\\])*?)\1\s*$/;
 
         self.last_errors = [];
         var errs = [];
-        while (( match = identifier_regex.exec(this.template)) !== null) {
+        while ((match = identifier_regex.exec(this.template)) !== null) {
             var expr = match[2];
             var name = match[3].trim();
             this.template = this.template.replace(expr, function(match) {
                 var names = name.split(/\s*\?\?\s*/);
-                for (var i=0; i<names.length; i++) {
+                for (var i = 0; i < names.length; i++) {
                     var name_id = names[i];
                     if ((match = name_id.match(string_regex))) {
                         return match[2];
@@ -174,7 +195,6 @@ tinyTemplate.prototype = {
                     }
                 }
                 errs.push("Failed to replace var " + expr + " in template");
-
                 // prevents infinite loop with keeping ${var} in the template
                 // regex won't process vars that are escaped with \ (i.e. \${my_var})
                 return self.interpolate_failure_as_blank ? "" : "\\" + expr;
