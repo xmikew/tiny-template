@@ -23,8 +23,21 @@ tinyTemplate.prototype = {
         }
         this.registry[name] = f;
     },
-
+    _extract_function_name: function(name) {
+        var match = name.match(/([^\(]+)/);
+        return match ? match[0] : null;
+    },
+    _extract_function_params: function(name) {
+        var match = name.match(/[^\(]+\(([^(]+)\)/);
+        if (match) {
+            return match[1].split(',').map(function(param) {
+                return param.trim();
+            });
+        }
+    },
     get_script: function(name) {
+        // split off parameters
+        name = this._extract_function_name(name);
         if (name.startsWith(this.function_prefix)) {
             var name_no_prefix = name.replace(this.function_prefix, "");
             if (this.registry.hasOwnProperty(name_no_prefix)) {
@@ -169,7 +182,8 @@ tinyTemplate.prototype = {
         var self = this;
         this.template = this.processConditionals(this.template, data);
 
-        var identifier_regex = /(\s*[^\\](\$\{\s*([^}]+)\s*\})\s*)/i;
+        var identifier_regex = /(\s*[^\\](\$\{\s*([a-zA-Z0-9:_-]+\s*(\(\s*[^\)]+\s*\))?[^}]*)\s*\})\s*)/i;
+        //var identifier_regex = /(\s*[^\\](\$\{\s*([^}]+)\s*\})\s*)/i;
         var string_regex = /^\s*(["'])((?:\\.|[^\\])*?)\1\s*$/;
 
         self.last_errors = [];
@@ -187,7 +201,7 @@ tinyTemplate.prototype = {
 
                     var f = self.get_script(name_id);
                     if (f) {
-                        var res_f = f(data, expr, name_id);
+                        var res_f = f(data, expr, name_id, self._extract_function_params(name_id));
                         if (res_f) return res_f;
                     } else {
                         var res = self.interpolate(expr, self.expand_aliases(name_id), data);
