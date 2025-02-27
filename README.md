@@ -31,10 +31,11 @@ Supports following:
 ```
 var template = "My custom script: ${script:custom}";
 var tinyTemplate = new TinyTemplate(template);
-tinyTemplate.register_script('custom', function(data, expr, name) {
+tinyTemplate.register_script('custom', function(data, expr, name, params) {
     //data = data currently being rendered
     //expr = ${script:custom}
-    //name = custom
+    //name = script:custom
+    //params = array of params provided if set, e.g. ${script:custom(param1, param2)}
 
     return "some calculated thing from data";
 });
@@ -94,6 +95,13 @@ var data = { user: { name: "Bob", attributes:[ {key_name: "department", value: "
 tinyTemplate.render(data);
 // john
 ```
+
+* Conditional Blocks
+```
+var template = "User: ${if user}${user}${else}Guest${endif} | Role: ${if role}${role}${else}Unknown${endif}";
+var data = { user: "Alice", role: "Admin" };
+template.render(data)
+// User: Alice | Role: Admin
 
 
 See test/template.js for more example usages

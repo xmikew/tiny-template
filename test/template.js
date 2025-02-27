@@ -287,4 +287,18 @@ describe('TinyTemplate', function() {
     });
 
 
+    it("should allow parameters into functions", function() {
+        var template = "My details are: Name - ${script:get(blah) ?? script:get(user, name)}"
+        var data = { user: { name: "Bob", attributes: [{key: "job", value: "devops"}, {key: "references", value: [1,2,3]}] } };
+        var expected = "My details are: Name - Bob"
+
+        var tinyTemplate = new TinyTemplate(template);
+        tinyTemplate.register_script('get', function(data, expr, nameid, params) {
+            return params.reduce(function(data, param) {
+                return data && data[param];
+            }, data);
+        });
+        var result = tinyTemplate.render(data);
+        assert.strictEqual(result, expected);
+    });
  });
