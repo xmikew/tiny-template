@@ -102,7 +102,7 @@ var template = "User: ${if user}${user}${else}Guest${endif} | Role: ${if role}${
 var data = { user: "Alice", role: "Admin" };
 template.render(data)
 // User: Alice | Role: Admin
-
+```
 
 See test/template.js for more example usages
 
