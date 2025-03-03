@@ -1,29 +1,30 @@
 import globals from "globals";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import js from "@eslint/js";
-import { FlatCompat } from "@eslint/eslintrc";
+import eslintPluginMocha from "eslint-plugin-mocha";
+import babelEslintParser from "@babel/eslint-parser";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const compat = new FlatCompat({
-    baseDirectory: __dirname,
-    recommendedConfig: js.configs.recommended,
-    allConfig: js.configs.all
-});
-
-export default [...compat.extends("eslint:recommended", "plugin:mocha/recommended"), {
+export default [
+  {
     languageOptions: {
-        globals: {
-            ...globals.node,
-            ...globals.mocha,
+      parser: babelEslintParser,
+      parserOptions: {
+        requireConfigFile: false, // No need for a Babel config file
+        babelOptions: {
+          presets: [["@babel/preset-env", { targets: "ie 11" }]], // Ensure ES5 compatibility
         },
-
-        ecmaVersion: 5,
-        sourceType: "commonjs",
+      },
+      ecmaVersion: 5, // Keep ES5 syntax
+      sourceType: "script", // Use "script" mode for non-module environments
+      globals: {
+        ...globals.node,
+        ...globals.mocha,
+      },
     },
-
+    plugins: {
+      mocha: eslintPluginMocha
+    },
     rules: {
-        "semi": "error",
+      semi: "error"
     },
-}];
+  },
+];
+

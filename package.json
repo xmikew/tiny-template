@@ -1,17 +1,19 @@
 {
   "name": "tiny-template",
   "description": "A tiny templating engine.",
-  "version": "2.0.3",
+  "version": "2.0.5",
   "main": "src/tiny-template.js",
   "directories": {
     "test": "test"
   },
   "scripts": {
     "test": "mocha",
-    "lint": "eslint .",
+    "lint": "eslint src/*.js test/*.js",
     "lint:fix": "eslint . --fix"
   },
   "devDependencies": {
+    "@babel/eslint-parser": "^7.26.8",
+    "@babel/preset-env": "^7.26.9",
     "@eslint/eslintrc": "^3.2.0",
     "@eslint/js": "^9.17.0",
     "eslint": "^9.17.0",

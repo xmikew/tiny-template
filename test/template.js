@@ -83,7 +83,7 @@ describe('TinyTemplate', function() {
         var data = { user: { name: "Bob", age: 25, address: { city: "New York" } } };
         var expected = "My details are: Name - Bob, <this is the custom part>";
         var tinyTemplate = new TinyTemplate(template);
-        tinyTemplate.register_script('test', function() { return "<this is the custom part>"});
+        tinyTemplate.register_script('test', function() { return "<this is the custom part>";});
         var result = tinyTemplate.render(data);
         assert.strictEqual(result, expected);
     });
@@ -105,7 +105,7 @@ describe('TinyTemplate', function() {
         var expected = "My details are: Name - Bob, Age - 25, Child - Susan";
 
         var tinyTemplate = new TinyTemplate(template, ['children']);
-        tinyTemplate.alias('first_child_name', 'user.children[0].name')
+        tinyTemplate.alias('first_child_name', 'user.children[0].name');
         var result = tinyTemplate.render(data);
 
         assert.strictEqual(result, expected);
@@ -117,7 +117,7 @@ describe('TinyTemplate', function() {
         var expected = "My details are: Name - Bob, Age - 25, Child - ";
 
         var tinyTemplate = new TinyTemplate(template, ['children']);
-        tinyTemplate.alias('first_child_name', 'user.children[3].name')
+        tinyTemplate.alias('first_child_name', 'user.children[3].name');
         var result = tinyTemplate.render(data);
 
         assert.strictEqual(result, expected);
@@ -129,7 +129,7 @@ describe('TinyTemplate', function() {
         var expected = "My details are: Name - Bob, Age - 25, Child - Susan";
 
         var tinyTemplate = new TinyTemplate(template, ['children']);
-        tinyTemplate.alias('first_child_name', 'user.children[0].name')
+        tinyTemplate.alias('first_child_name', 'user.children[0].name');
         var result = tinyTemplate.render(data);
 
         assert.strictEqual(result, expected);
@@ -142,7 +142,7 @@ describe('TinyTemplate', function() {
         var expected = "My details are: Name - test ' test, Age - 25, Child - Susan";
 
         var tinyTemplate = new TinyTemplate(template, ['children']);
-        tinyTemplate.alias('first_child_name', 'user.children[0].name')
+        tinyTemplate.alias('first_child_name', 'user.children[0].name');
         var result = tinyTemplate.render(data);
 
         assert.strictEqual(result, expected);
@@ -154,8 +154,8 @@ describe('TinyTemplate', function() {
         var expected = "My details are: Name - Bob, Age - 25, Child - Susan, custom - <this is the custom part>";
 
         var tinyTemplate = new TinyTemplate(template, ['children']);
-        tinyTemplate.register_script('test', function() { return "<this is the custom part>"});
-        tinyTemplate.alias('first_child_name', 'user.children[0].name')
+        tinyTemplate.register_script('test', function() { return "<this is the custom part>";});
+        tinyTemplate.alias('first_child_name', 'user.children[0].name');
         var result = tinyTemplate.render(data);
 
         assert.strictEqual(result, expected);
@@ -167,8 +167,8 @@ describe('TinyTemplate', function() {
         var expected = "My details are: Name - Bob, Age - , Child - Susan, custom - <this is the custom part>";
 
         var tinyTemplate = new TinyTemplate(template, ['children']);
-        tinyTemplate.register_script('test', function() { return "<this is the custom part>"});
-        tinyTemplate.alias('first_child_name', 'user.children[0].name')
+        tinyTemplate.register_script('test', function() { return "<this is the custom part>";});
+        tinyTemplate.alias('first_child_name', 'user.children[0].name');
         var result = tinyTemplate.render(data);
 
         assert.strictEqual(result, expected);
@@ -190,8 +190,8 @@ describe('TinyTemplate', function() {
         var expected = "My details are: Name - Bob, Age - 25, Child - Susan, custom - <this is the custom part>";
 
         var tinyTemplate = new TinyTemplate(template, ['children']);
-        tinyTemplate.register_script('test', function() { return "<this is the custom part>"});
-        tinyTemplate.alias('first_child_name', 'user.children[0].name')
+        tinyTemplate.register_script('test', function() { return "<this is the custom part>";});
+        tinyTemplate.alias('first_child_name', 'user.children[0].name');
         assert.throws(function() {
                 tinyTemplate.render(data, true);
             },
@@ -251,4 +251,55 @@ describe('TinyTemplate', function() {
         assert.strictEqual(result, expected);
     });
 
+
+    it("should handle key exists operator in dict lookup and array", function() {
+        var template = "My details are: Name - ${user.name}, first reference: ${user.attributes[key=references?][0]}";
+        var data = { user: { name: "Bob", attributes: [{key: "job", value: "devops"}, {references: [1,2,3]}] } };
+        var expected = "My details are: Name - Bob, first reference: 1";
+
+        var tinyTemplate = new TinyTemplate(template);
+        var result = tinyTemplate.render(data);
+
+        assert.strictEqual(result, expected);
+    });
+
+
+    it("should handle key exists operator in dict lookup and dict", function() {
+        var template = "My details are: Name - ${user.name}, first reference: ${user.attributes[key=references?].name}";
+        var data = { user: { name: "Bob", attributes: [{key: "job", value: "devops"}, {references: {name: "john"} }] } };
+        var expected = "My details are: Name - Bob, first reference: john";
+
+        var tinyTemplate = new TinyTemplate(template);
+        var result = tinyTemplate.render(data);
+
+        assert.strictEqual(result, expected);
+    });
+
+
+    it("should not confuse key=val? with key=val", function() {
+        var template = "My details are: Name - ${user.name}, first reference: ${user.attributes[key=references].value[0]}";
+        var data = { user: { name: "Bob", attributes: [{key: "job", value: "devops"}, {key: "references", value: [1,2,3]}] } };
+        var expected = "My details are: Name - Bob, first reference: 1";
+
+        var tinyTemplate = new TinyTemplate(template);
+        var result = tinyTemplate.render(data);
+
+        assert.strictEqual(result, expected);
+    });
+
+
+    it("should allow parameters into functions", function() {
+        var template = "My details are: Name - ${script:get(blah) ?? script:get(user, name)}";
+        var data = { user: { name: "Bob", attributes: [{key: "job", value: "devops"}, {key: "references", value: [1,2,3]}] } };
+        var expected = "My details are: Name - Bob";
+
+        var tinyTemplate = new TinyTemplate(template);
+        tinyTemplate.register_script('get', function(data, expr, nameid, params) {
+            return params.reduce(function(data, param) {
+                return data && data[param];
+            }, data);
+        });
+        var result = tinyTemplate.render(data);
+        assert.strictEqual(result, expected);
+    });
  });

@@ -1,3 +1,4 @@
+// for SNOW
 var tinyTemplate = Class.create();
 
 tinyTemplate.prototype = {
@@ -21,11 +22,26 @@ tinyTemplate.prototype = {
         if (typeof f !== 'function') {
             throw new Error("register_script: attempt to register non-function");
         }
-
         this.registry[name] = f;
     },
 
+    _extract_function_name: function(name) {
+        var match = name.match(/([^(]+)/);
+        return match ? match[0] : null;
+    },
+
+    _extract_function_params: function(name) {
+        var match = name.match(/[^(]+\(([^(]+)\)/);
+        if (match) {
+            return match[1].split(',').map(function(param) {
+                return param.trim();
+            });
+        }
+    },
+
     get_script: function(name) {
+        // split off parameters
+        name = this._extract_function_name(name);
         if (name.startsWith(this.function_prefix)) {
             var name_no_prefix = name.replace(this.function_prefix, "");
             if (this.registry.hasOwnProperty(name_no_prefix)) {
@@ -78,6 +94,7 @@ tinyTemplate.prototype = {
         var res = name.split('.').reduce(function(obj, key) {
             var arr_regex = /^\s*([a-zA-Z0-9_-]+)\[\s*(\d+)\s*\]\s*$/i;
             var dict_regex = /^\s*([a-zA-Z0-9]+)\s*\[\s*["']?\s*([a-zA-Z0-9_-]+)\s*['"]?\s*=\s*['"]?\s*([a-zA-Z0-9_-]+)\s*['"]?\s*\]\s*$/i;
+            var exists_regex = /^\s*([a-zA-Z0-9]+)\s*\[\s*["']?\s*key\s*['"]?\s*=\s*['"]?\s*([a-zA-Z0-9_-]+)\s*['"]?\s*\?\s*\](\[\s*(\d+)\s*\]\s*)?\s*$/i;
             var match;
             if ( (match = arr_regex.exec(key)) !== null) {
                 // array matching
@@ -98,7 +115,26 @@ tinyTemplate.prototype = {
                             return search_array[i];
                         }
                     }
-                // eslint-disable-next-line no-unused-vars
+                } catch (e) {
+                    return "";
+                }
+            }
+            else if ( (match = exists_regex.exec(key)) !== null) {
+                var obj_name = match[1];
+                var key_search = match[2];
+                var array_index = match[4];
+                try {
+                    var search_arr = obj[obj_name];
+                    for (var j = 0; j < search_arr.length; j++) {
+                        if (search_arr[j].hasOwnProperty(key_search)) {
+                            if (array_index !== undefined) {
+                                return search_arr[j][key_search][parseInt(array_index, 10)];
+                            } else {
+                                return search_arr[j][key_search];
+                            }
+                        }
+                    }
+                 
                 } catch (e) {
                     return "";
                 }
@@ -126,10 +162,29 @@ tinyTemplate.prototype = {
         return err;
     },
 
+    evaluateCondition: function(condition, data) {
+        var val = this.interpolate("", this.expand_aliases(condition.trim()), data);
+        return !!val;
+    },
+
+    processConditionals: function(template, data) {
+        var self = this;
+        //regex
+        var conditionalRe = /\$\{\s*if\s+([^}]+)\s*\}([\s\S]*?)(?:\$\{\s*else\s*\}([\s\S]*?))?\$\{\s*endif\s*\}/g;
+        return template.replace(conditionalRe, function(match, condition, truePart, falsePart) {
+            if (self.evaluateCondition(condition, data)) {
+                return truePart;
+            } else {
+                return falsePart || "";
+            }
+        });
+    },
+
     render: function(data, validate) {
         var self = this;
+        this.template = this.processConditionals(this.template, data);
 
-        var identifier_regex = /(\s*[^\\](\$\{\s*([^}]+)\s*\})\s*)/i;
+        var identifier_regex = /(\s*[^\\](\$\{\s*([a-zA-Z0-9:_-]+\s*(\(\s*[^)]+\s*\))?[^}]*)\s*\})\s*)/i;
         var string_regex = /^\s*(["'])((?:\\.|[^\\])*?)\1\s*$/;
 
         self.last_errors = [];
@@ -140,7 +195,7 @@ tinyTemplate.prototype = {
             var name = match[3].trim();
             this.template = this.template.replace(expr, function(match) {
                 var names = name.split(/\s*\?\?\s*/);
-                for (var i=0; i<names.length; i++) {
+                for (var i = 0; i < names.length; i++) {
                     var name_id = names[i];
                     if ((match = name_id.match(string_regex))) {
                         return match[2];
@@ -148,7 +203,7 @@ tinyTemplate.prototype = {
 
                     var f = self.get_script(name_id);
                     if (f) {
-                        var res_f = f(data, expr, name_id);
+                        var res_f = f(data, expr, name_id, self._extract_function_params(name_id));
                         if (res_f) return res_f;
                     } else {
                         var res = self.interpolate(expr, self.expand_aliases(name_id), data);
@@ -156,7 +211,6 @@ tinyTemplate.prototype = {
                     }
                 }
                 errs.push("Failed to replace var " + expr + " in template");
-
                 // prevents infinite loop with keeping ${var} in the template
                 // regex won't process vars that are escaped with \ (i.e. \${my_var})
                 return self.interpolate_failure_as_blank ? "" : "\\" + expr;
@@ -174,4 +228,5 @@ tinyTemplate.prototype = {
     type: 'tinyTemplate'
 };
 
+// do not copy into SNOW
 module.exports = tinyTemplate;
