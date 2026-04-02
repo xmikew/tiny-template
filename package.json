@@ -1,7 +1,7 @@
 {
   "name": "tiny-template",
   "description": "A tiny templating engine.",
-  "version": "2.0.5",
+  "version": "2.0.6",
   "main": "src/tiny-template.js",
   "directories": {
     "test": "test"

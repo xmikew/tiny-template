@@ -80,69 +80,11 @@ tinyTemplate.prototype = {
     },
 
     render_if_json: function(key, data) {
-        if (this.json_fields.indexOf(key) >= 0 && typeof(data[key] === "string")) {
-            var ret = {};
-            ret[key] = JSON.parse(data[key]);
-            return ret;
-        } else {
-            return data;
-        }
+        return tinyTemplate.render_if_json(key, data, this.json_fields);
     },
 
     interpolate: function(expr, name, data) {
-        var self = this;
-        var res = name.split('.').reduce(function(obj, key) {
-            var arr_regex = /^\s*([a-zA-Z0-9_-]+)\[\s*(\d+)\s*\]\s*$/i;
-            var dict_regex = /^\s*([a-zA-Z0-9]+)\s*\[\s*["']?\s*([a-zA-Z0-9_-]+)\s*['"]?\s*=\s*['"]?\s*([a-zA-Z0-9_-]+)\s*['"]?\s*\]\s*$/i;
-            var exists_regex = /^\s*([a-zA-Z0-9]+)\s*\[\s*["']?\s*key\s*['"]?\s*=\s*['"]?\s*([a-zA-Z0-9_-]+)\s*['"]?\s*\?\s*\](\[\s*(\d+)\s*\]\s*)?\s*$/i;
-            var match;
-            if ( (match = arr_regex.exec(key)) !== null) {
-                // array matching
-                var key_name = match[1];
-                var index = match[2];
-                obj = self.render_if_json(key_name, obj);
-                return obj && obj[key_name] && obj[key_name][index];
-            }
-            else if ( (match = dict_regex.exec(key)) !== null) {
-                // dict lookup matching
-                var var_name = match[1];
-                var lookup_name = match[2];
-                var index_match_val = match[3];
-                try {
-                    var search_array = obj[var_name];
-                    for (var i=0; i<search_array.length; i++) {
-                        if (search_array[i][lookup_name] == index_match_val) {
-                            return search_array[i];
-                        }
-                    }
-                } catch (e) {
-                    return "";
-                }
-            }
-            else if ( (match = exists_regex.exec(key)) !== null) {
-                var obj_name = match[1];
-                var key_search = match[2];
-                var array_index = match[4];
-                try {
-                    var search_arr = obj[obj_name];
-                    for (var j = 0; j < search_arr.length; j++) {
-                        if (search_arr[j].hasOwnProperty(key_search)) {
-                            if (array_index !== undefined) {
-                                return search_arr[j][key_search][parseInt(array_index, 10)];
-                            } else {
-                                return search_arr[j][key_search];
-                            }
-                        }
-                    }
-                 
-                } catch (e) {
-                    return "";
-                }
-            }
-            obj = self.render_if_json(key, obj);
-            return obj && obj[key];
-        }, data);
-        return res;
+        return tinyTemplate.resolve_path(data, name, this.json_fields);
     },
 
     validate: function(errs) {
@@ -226,6 +168,81 @@ tinyTemplate.prototype = {
     },
 
     type: 'tinyTemplate'
+};
+
+// Static: (key, object, jsonFieldNames). Instance render_if_json delegates with this.json_fields.
+tinyTemplate.render_if_json = function(key, obj, jsonFieldNames) {
+    if (jsonFieldNames.indexOf(key) >= 0 && typeof obj[key] === "string") {
+        var ret = {};
+        ret[key] = JSON.parse(obj[key]);
+        return ret;
+    }
+    return obj;
+};
+
+// Naive split: same behavior as legacy interpolate; dots inside brackets are not special-cased.
+tinyTemplate.tokenize_path = function(pathString) {
+    return pathString.split('.');
+};
+
+tinyTemplate.resolve_segment = function(obj, key, jsonFieldNames) {
+    var arr_regex = /^\s*([a-zA-Z0-9_-]+)\[\s*(\d+)\s*\]\s*$/i;
+    var dict_regex = /^\s*([a-zA-Z0-9]+)\s*\[\s*["']?\s*([a-zA-Z0-9_-]+)\s*['"]?\s*=\s*['"]?\s*([a-zA-Z0-9_-]+)\s*['"]?\s*\]\s*$/i;
+    var exists_regex = /^\s*([a-zA-Z0-9]+)\s*\[\s*["']?\s*key\s*['"]?\s*=\s*['"]?\s*([a-zA-Z0-9_-]+)\s*['"]?\s*\?\s*\](\[\s*(\d+)\s*\]\s*)?\s*$/i;
+    var match;
+    if ((match = arr_regex.exec(key)) !== null) {
+        var key_name = match[1];
+        var index = match[2];
+        obj = tinyTemplate.render_if_json(key_name, obj, jsonFieldNames);
+        return obj && obj[key_name] && obj[key_name][index];
+    }
+    if ((match = dict_regex.exec(key)) !== null) {
+        var var_name = match[1];
+        var lookup_name = match[2];
+        var index_match_val = match[3];
+        try {
+            var search_array = obj[var_name];
+            for (var i = 0; i < search_array.length; i++) {
+                if (search_array[i][lookup_name] == index_match_val) {
+                    return search_array[i];
+                }
+            }
+        } catch (e) {
+            return "";
+        }
+    }
+    if ((match = exists_regex.exec(key)) !== null) {
+        var obj_name = match[1];
+        var key_search = match[2];
+        var array_index = match[4];
+        try {
+            var search_arr = obj[obj_name];
+            for (var j = 0; j < search_arr.length; j++) {
+                if (search_arr[j].hasOwnProperty(key_search)) {
+                    if (array_index !== undefined) {
+                        return search_arr[j][key_search][parseInt(array_index, 10)];
+                    }
+                    return search_arr[j][key_search];
+                }
+            }
+        } catch (e) {
+            return "";
+        }
+    }
+    obj = tinyTemplate.render_if_json(key, obj, jsonFieldNames);
+    return obj && obj[key];
+};
+
+tinyTemplate.resolve_path = function(root, pathString, jsonFieldNames) {
+    if (jsonFieldNames === undefined) {
+        jsonFieldNames = [];
+    }
+    var segments = tinyTemplate.tokenize_path(pathString);
+    var cur = root;
+    for (var s = 0; s < segments.length; s++) {
+        cur = tinyTemplate.resolve_segment(cur, segments[s], jsonFieldNames);
+    }
+    return cur;
 };
 
 // do not copy into SNOW
