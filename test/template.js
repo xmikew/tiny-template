@@ -99,6 +99,22 @@ describe('TinyTemplate', function() {
         assert.strictEqual(result, expected);
     });
 
+    it('should not JSON.parse when json_field value is already an object', function() {
+        var template = 'Child: ${user.children[0].name}';
+        var data = { user: { name: 'Bob', children: [{ name: 'Susan', age: 10 }] } };
+        var expected = 'Child: Susan';
+
+        var tinyTemplate = new TinyTemplate(template, ['children']);
+        var result = tinyTemplate.render(data);
+
+        assert.strictEqual(result, expected);
+    });
+
+    it('should resolve_path when json_field value is already an object', function() {
+        var data = { user: { children: [{ name: 'Susan' }] } };
+        assert.strictEqual(TinyTemplate.resolve_path(data, 'user.children[0].name', ['children']), 'Susan');
+    });
+
     it('should allow aliases to be used', function() {
         var template = "My details are: Name - ${user.name}, Age - ${user.age}, Child - ${alias:first_child_name}";
         var data = { user: { name: "Bob", age: 25, children: '[{"name": "Susan", "age":10}, {"name": "Bobby", "age": 10}]' }};
@@ -301,5 +317,25 @@ describe('TinyTemplate', function() {
         });
         var result = tinyTemplate.render(data);
         assert.strictEqual(result, expected);
+    });
+
+    it('should expose resolve_path for nested paths and json fields', function() {
+        var data = { user: { name: 'Bob', children: '[{"name": "Susan"}]' } };
+        assert.strictEqual(TinyTemplate.resolve_path(data, 'user.name', []), 'Bob');
+        assert.strictEqual(TinyTemplate.resolve_path(data, 'user.children[0].name', ['children']), 'Susan');
+    });
+
+    it('should expose tokenize_path as legacy dot split', function() {
+        assert.deepStrictEqual(TinyTemplate.tokenize_path('a.b[0].c'), ['a', 'b[0]', 'c']);
+    });
+
+    it('should expose resolve_segment for a single plain property step', function() {
+        var obj = { user: { name: 'Bob' } };
+        assert.strictEqual(TinyTemplate.resolve_segment(obj, 'user', []), obj.user);
+    });
+
+    it('should expose resolve_path for array object lookup path', function() {
+        var data = { user: { name: 'Bob', attributes: [{ key: 'job', value: 'devops' }] } };
+        assert.strictEqual(TinyTemplate.resolve_path(data, 'user.attributes[key=job].value', []), 'devops');
     });
  });

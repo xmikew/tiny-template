@@ -8,7 +8,7 @@ I needed a small templating engine with following criteria:
 
 - Small - copy and pasteable
 - Runs on ES5
-- No depedencies (except dev deps, testing)
+- No dependencies (except dev deps, testing)
 
 Why? To use within Service-Now. I needed to be able to copy it quickly to a global include and also have no dependencies. Since Service-Now is often using a older js engine, I needed to be compatible with ES5.
 
@@ -79,10 +79,10 @@ tinyTemplate.render(data);
 // Bob
 ```
 
-* Array of Dict lookups
+* Array of Dict lookups (array of objects with the **same** fields, e.g. `key_name` + `value`)
 ```
-var tinyTemplate = new TinyTemplate("${user.attributes[key=department].value}");
-var data = { user: { name: "Bob", attributes:[ {key: "department", value: "finance"}, {key: "title", value: "cro"} ] } };
+var tinyTemplate = new TinyTemplate("${user.attributes[key_name=department].value}");
+var data = { user: { name: "Bob", attributes: [{ key_name: "department", value: "finance" }, { key_name: "title", value: "cro" }] } };
 tinyTemplate.render(data);
 // finance
 ```
@@ -100,11 +100,43 @@ tinyTemplate.render(data);
 ```
 var template = "User: ${if user}${user}${else}Guest${endif} | Role: ${if role}${role}${else}Unknown${endif}";
 var data = { user: "Alice", role: "Admin" };
-template.render(data)
+var tinyTemplate = new TinyTemplate(template);
+tinyTemplate.render(data);
 // User: Alice | Role: Admin
 ```
 
 See test/template.js for more example usages
+
+## API
+
+### High-level (template instance)
+
+Typical ServiceNow or app code uses the **instance** only:
+
+| Method / property | Purpose | Example |
+|-------------------|---------|---------|
+| `new TinyTemplate(templateString, jsonFieldNames?)` | Build an engine for one template. Optional `jsonFieldNames` lists property names (dotted path segments) whose values are **JSON strings** to parse when resolving paths; if the value is already an object, it is left as-is. | `// template: 'Hello ${user.name}'`<br>`new TinyTemplate('Hello ${user.name}', ['children'])` |
+| `render(data, validate?)` | Substitute `${…}` in the template using `data`. If `validate === true`, throws when any placeholder cannot be resolved. | `// data = { user: { name: 'Bob' } }`<br>`t.render(data)` |
+| `register_script(name, fn)` | Register `${script:name}` / `${script:name(a, b)}` handlers. | `// data = { ticket: 'INC001' }` (template uses `${script:ticket}`)<br>`t.register_script('ticket', function (d) { return d.ticket; })` |
+| `alias(shortName, dottedPath)` | Map `${alias:shortName}` segments to a longer path. | `// data = { user: { emails: ['a@b.com'] } }` (template uses `${alias:primary}`)<br>`t.alias('primary', 'user.emails[0]')` |
+| `interpolate_failure_as_blank` | If `true` (default), unresolved placeholders become empty text; if `false`, the `${…}` token is preserved in the output. | `// data = {}`, template has `${user.missing}`<br>`t.interpolate_failure_as_blank = false` |
+| `last_errors` | After `render` without `validate`, holds messages for placeholders that failed. | `// after render with unresolved placeholders`<br>`t.last_errors` |
+| `get_error_str(errs)` | Format error list for logging or throwing. | `// errs = t.last_errors`<br>`t.get_error_str(errs)` |
+
+Conditionals (`${if …}${else}${endif}`), null coalesce (`??`), literals in `${…}`, and path syntax are all handled inside `render`.
+
+### Low-level (static path helpers)
+
+Same path rules as `${path}` inside a template, for resolving paths against data without going through `render`.
+
+| Static | Purpose | Example |
+|--------|---------|---------|
+| `TinyTemplate.resolve_path(root, pathString, jsonFieldNames?)` | Walk one dotted/bracket path from `root` and return the value. `jsonFieldNames` matches the second argument to the constructor when paths cross stringified JSON fields. | `// data = { user: { name: 'Bob' } }`<br>`TinyTemplate.resolve_path(data, 'user.name', [])` → `'Bob'` |
+| `TinyTemplate.render_if_json(key, obj, jsonFieldNames)` | If `key` is listed and `obj[key]` is a string, parse JSON and return a shallow wrapper; otherwise return `obj`. Instance `render_if_json` delegates here with `this.json_fields`. | `// obj = { items: '[1,2]' }`, key `items` is listed<br>`TinyTemplate.render_if_json('items', obj, ['items'])` |
+
+`resolve_path` is the supported entry point for path resolution outside `render`. Other helpers exist on the constructor for implementation (`resolve_segment`, `tokenize_path`); **do not rely on them** from app code—they may change when the parser or walk strategy changes.
+
+Path strings for `resolve_path` should match what you would put inside `${…}` **after** any `alias:` expansion you apply yourself.
 
 ## Contributing
 
