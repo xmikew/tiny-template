@@ -256,6 +256,28 @@ describe('TinyTemplate', function() {
         assert.strictEqual(result, expected);
     });
 
+    it('should resolve dict lookup when container name has underscore (key_name=value)', function() {
+        var template = 'Dept: ${user.attr_rows[key_name=department].value}';
+        var data = {
+            user: {
+                attr_rows: [
+                    { key_name: 'title', value: 'cro' },
+                    { key_name: 'department', value: 'IT' }
+                ]
+            }
+        };
+        var expected = 'Dept: IT';
+
+        var tinyTemplate = new TinyTemplate(template);
+        var result = tinyTemplate.render(data);
+        assert.strictEqual(result, expected);
+
+        assert.strictEqual(
+            TinyTemplate.resolve_path(data, 'user.attr_rows[key_name=department].value', []),
+            'IT'
+        );
+    });
+
     it("should handle not error of array of objects when not array", function() {
         var template = "My details are: Name - ${user.name}, job is ${user.attributes[key=job].value}";
         var data = { user: { name: "Bob", attributes: {key: "job"} } };
@@ -277,6 +299,28 @@ describe('TinyTemplate', function() {
         var result = tinyTemplate.render(data);
 
         assert.strictEqual(result, expected);
+    });
+
+    it('should handle exists operator when container name has underscore', function() {
+        var template = 'First: ${user.attr_rows[key=references?][0]}';
+        var data = {
+            user: {
+                attr_rows: [
+                    { key: 'job', value: 'devops' },
+                    { references: [9, 10] }
+                ]
+            }
+        };
+        var expected = 'First: 9';
+
+        var tinyTemplate = new TinyTemplate(template);
+        var result = tinyTemplate.render(data);
+        assert.strictEqual(result, expected);
+
+        assert.strictEqual(
+            TinyTemplate.resolve_path(data, 'user.attr_rows[key=references?][0]', []),
+            9
+        );
     });
 
 

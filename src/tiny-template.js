@@ -187,8 +187,8 @@ tinyTemplate.tokenize_path = function(pathString) {
 
 tinyTemplate.resolve_segment = function(obj, key, jsonFieldNames) {
     var arr_regex = /^\s*([a-zA-Z0-9_-]+)\[\s*(\d+)\s*\]\s*$/i;
-    var dict_regex = /^\s*([a-zA-Z0-9]+)\s*\[\s*["']?\s*([a-zA-Z0-9_-]+)\s*['"]?\s*=\s*['"]?\s*([a-zA-Z0-9_-]+)\s*['"]?\s*\]\s*$/i;
-    var exists_regex = /^\s*([a-zA-Z0-9]+)\s*\[\s*["']?\s*key\s*['"]?\s*=\s*['"]?\s*([a-zA-Z0-9_-]+)\s*['"]?\s*\?\s*\](\[\s*(\d+)\s*\]\s*)?\s*$/i;
+    var dict_regex = /^\s*([a-zA-Z0-9_-]+)\s*\[\s*["']?\s*([a-zA-Z0-9_-]+)\s*['"]?\s*=\s*['"]?\s*([a-zA-Z0-9_-]+)\s*['"]?\s*\]\s*$/i;
+    var exists_regex = /^\s*([a-zA-Z0-9_-]+)\s*\[\s*["']?\s*key\s*['"]?\s*=\s*['"]?\s*([a-zA-Z0-9_-]+)\s*['"]?\s*\?\s*\](\[\s*(\d+)\s*\]\s*)?\s*$/i;
     var match;
     if ((match = arr_regex.exec(key)) !== null) {
         var key_name = match[1];
