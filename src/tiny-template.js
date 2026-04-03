@@ -2,7 +2,7 @@
 var tinyTemplate = Class.create();
 
 tinyTemplate.prototype = {
-    initialize: function(template, json_fields) {
+    initialize: function(template, json_fields, coerceJsonFields) {
         this.function_prefix = "script:";
         this.alias_prefix = "alias:";
         this.template = template;
@@ -16,6 +16,7 @@ tinyTemplate.prototype = {
         } else {
             this.json_fields = json_fields;
         }
+        this.coerce_json_fields = coerceJsonFields === undefined ? false : !!coerceJsonFields;
     },
 
     register_script: function(name, f) {
@@ -80,11 +81,11 @@ tinyTemplate.prototype = {
     },
 
     render_if_json: function(key, data) {
-        return tinyTemplate.render_if_json(key, data, this.json_fields);
+        return tinyTemplate.render_if_json(key, data, this.json_fields, this.coerce_json_fields);
     },
 
     interpolate: function(expr, name, data) {
-        return tinyTemplate.resolve_path(data, name, this.json_fields);
+        return tinyTemplate.resolve_path(data, name, this.json_fields, this.coerce_json_fields);
     },
 
     validate: function(errs) {
@@ -170,12 +171,41 @@ tinyTemplate.prototype = {
     type: 'tinyTemplate'
 };
 
-// Static: (key, object, jsonFieldNames). Instance render_if_json delegates with this.json_fields.
-tinyTemplate.render_if_json = function(key, obj, jsonFieldNames) {
-    if (jsonFieldNames.indexOf(key) >= 0 && typeof obj[key] === "string") {
+// Static: (key, object, jsonFieldNames, coerceJsonFields). Instance passes this.json_fields / this.coerce_json_fields.
+tinyTemplate.render_if_json = function(key, obj, jsonFieldNames, coerceJsonFields) {
+    if (jsonFieldNames.indexOf(key) < 0) {
+        return obj;
+    }
+    if (coerceJsonFields === undefined) {
+        coerceJsonFields = false;
+    }
+    var raw = obj[key];
+    if (raw === undefined || raw === null) {
+        return obj;
+    }
+    if (typeof raw === "string") {
         var ret = {};
-        ret[key] = JSON.parse(obj[key]);
+        ret[key] = JSON.parse(raw);
         return ret;
+    }
+    if (Array.isArray(raw)) {
+        return obj;
+    }
+    if (coerceJsonFields) {
+        try {
+            var asString = String(raw);
+            if (asString.length > 0) {
+                var parsed = JSON.parse(asString);
+                var retCoerce = {};
+                retCoerce[key] = parsed;
+                return retCoerce;
+            }
+        } catch (e) {
+            /* fall through: use raw as-is when coercion is not valid JSON */
+        }
+    }
+    if (typeof raw === "object") {
+        return obj;
     }
     return obj;
 };
@@ -185,7 +215,7 @@ tinyTemplate.tokenize_path = function(pathString) {
     return pathString.split('.');
 };
 
-tinyTemplate.resolve_segment = function(obj, key, jsonFieldNames) {
+tinyTemplate.resolve_segment = function(obj, key, jsonFieldNames, coerceJsonFields) {
     var arr_regex = /^\s*([a-zA-Z0-9_-]+)\[\s*(\d+)\s*\]\s*$/i;
     var dict_regex = /^\s*([a-zA-Z0-9_-]+)\s*\[\s*["']?\s*([a-zA-Z0-9_-]+)\s*['"]?\s*=\s*['"]?\s*([a-zA-Z0-9_-]+)\s*['"]?\s*\]\s*$/i;
     var exists_regex = /^\s*([a-zA-Z0-9_-]+)\s*\[\s*["']?\s*key\s*['"]?\s*=\s*['"]?\s*([a-zA-Z0-9_-]+)\s*['"]?\s*\?\s*\](\[\s*(\d+)\s*\]\s*)?\s*$/i;
@@ -193,7 +223,7 @@ tinyTemplate.resolve_segment = function(obj, key, jsonFieldNames) {
     if ((match = arr_regex.exec(key)) !== null) {
         var key_name = match[1];
         var index = match[2];
-        obj = tinyTemplate.render_if_json(key_name, obj, jsonFieldNames);
+        obj = tinyTemplate.render_if_json(key_name, obj, jsonFieldNames, coerceJsonFields);
         return obj && obj[key_name] && obj[key_name][index];
     }
     if ((match = dict_regex.exec(key)) !== null) {
@@ -229,18 +259,21 @@ tinyTemplate.resolve_segment = function(obj, key, jsonFieldNames) {
             return "";
         }
     }
-    obj = tinyTemplate.render_if_json(key, obj, jsonFieldNames);
+    obj = tinyTemplate.render_if_json(key, obj, jsonFieldNames, coerceJsonFields);
     return obj && obj[key];
 };
 
-tinyTemplate.resolve_path = function(root, pathString, jsonFieldNames) {
+tinyTemplate.resolve_path = function(root, pathString, jsonFieldNames, coerceJsonFields) {
     if (jsonFieldNames === undefined) {
         jsonFieldNames = [];
+    }
+    if (coerceJsonFields === undefined) {
+        coerceJsonFields = false;
     }
     var segments = tinyTemplate.tokenize_path(pathString);
     var cur = root;
     for (var s = 0; s < segments.length; s++) {
-        cur = tinyTemplate.resolve_segment(cur, segments[s], jsonFieldNames);
+        cur = tinyTemplate.resolve_segment(cur, segments[s], jsonFieldNames, coerceJsonFields);
     }
     return cur;
 };

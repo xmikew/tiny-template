@@ -51,6 +51,8 @@ var data = {children: '[{"name": "Jane"}, {"name": "Bobby"}]'};
 tinyTemplate.render(data);
 ```
 
+If a listed field is not a primitive string but stringifies to JSON (e.g. some application wrappers), pass a third argument `true`: `new TinyTemplate(template, json_fields, true)`.
+
 * Aliases
 
 ```
@@ -115,7 +117,7 @@ Typical ServiceNow or app code uses the **instance** only:
 
 | Method / property | Purpose | Example |
 |-------------------|---------|---------|
-| `new TinyTemplate(templateString, jsonFieldNames?)` | Build an engine for one template. Optional `jsonFieldNames` lists property names (dotted path segments) whose values are **JSON strings** to parse when resolving paths; if the value is already an object, it is left as-is. | `// template: 'Hello ${user.name}'`<br>`new TinyTemplate('Hello ${user.name}', ['children'])` |
+| `new TinyTemplate(templateString, jsonFieldNames?, coerceJsonFields?)` | Build an engine for one template. Optional `jsonFieldNames` lists property names (dotted path segments) whose values are **JSON strings** to parse when resolving paths; if the value is already an array or plain object, it is left as-is. If `coerceJsonFields === true`, non-string values for listed keys are run through `String(value)` and then `JSON.parse` when that produces valid JSON (for hosts where the field is not a primitive string). Default is `false`. | `// strict string JSON only`<br>`new TinyTemplate(tpl, ['u_source_data'])`<br>`// allow String(coerced)`<br>`new TinyTemplate(tpl, ['u_source_data'], true)` |
 | `render(data, validate?)` | Substitute `${…}` in the template using `data`. If `validate === true`, throws when any placeholder cannot be resolved. | `// data = { user: { name: 'Bob' } }`<br>`t.render(data)` |
 | `register_script(name, fn)` | Register `${script:name}` / `${script:name(a, b)}` handlers. | `// data = { ticket: 'INC001' }` (template uses `${script:ticket}`)<br>`t.register_script('ticket', function (d) { return d.ticket; })` |
 | `alias(shortName, dottedPath)` | Map `${alias:shortName}` segments to a longer path. | `// data = { user: { emails: ['a@b.com'] } }` (template uses `${alias:primary}`)<br>`t.alias('primary', 'user.emails[0]')` |
@@ -131,8 +133,8 @@ Same path rules as `${path}` inside a template, for resolving paths against data
 
 | Static | Purpose | Example |
 |--------|---------|---------|
-| `TinyTemplate.resolve_path(root, pathString, jsonFieldNames?)` | Walk one dotted/bracket path from `root` and return the value. `jsonFieldNames` matches the second argument to the constructor when paths cross stringified JSON fields. | `// data = { user: { name: 'Bob' } }`<br>`TinyTemplate.resolve_path(data, 'user.name', [])` → `'Bob'` |
-| `TinyTemplate.render_if_json(key, obj, jsonFieldNames)` | If `key` is listed and `obj[key]` is a string, parse JSON and return a shallow wrapper; otherwise return `obj`. Instance `render_if_json` delegates here with `this.json_fields`. | `// obj = { items: '[1,2]' }`, key `items` is listed<br>`TinyTemplate.render_if_json('items', obj, ['items'])` |
+| `TinyTemplate.resolve_path(root, pathString, jsonFieldNames?, coerceJsonFields?)` | Walk one dotted/bracket path from `root` and return the value. `jsonFieldNames` / `coerceJsonFields` match the second and third constructor arguments when resolving listed JSON fields. | `// data = { user: { name: 'Bob' } }`<br>`TinyTemplate.resolve_path(data, 'user.name', [])` → `'Bob'` |
+| `TinyTemplate.render_if_json(key, obj, jsonFieldNames, coerceJsonFields?)` | If `key` is listed: parse when `obj[key]` is a string; if `coerceJsonFields` is true, also try `JSON.parse(String(obj[key]))`; if already an array or plain object (after failed coerce), return `obj`. Instance passes `this.coerce_json_fields`. | `// obj = { items: '[1,2]' }`, key `items` is listed<br>`TinyTemplate.render_if_json('items', obj, ['items'])` |
 
 `resolve_path` is the supported entry point for path resolution outside `render`. Other helpers exist on the constructor for implementation (`resolve_segment`, `tokenize_path`); **do not rely on them** from app code—they may change when the parser or walk strategy changes.
 

@@ -110,6 +110,46 @@ describe('TinyTemplate', function() {
         assert.strictEqual(result, expected);
     });
 
+    it('should JSON.parse json_field when coerceJsonFields and String(value) is JSON text', function() {
+        var template = 'Type: ${payload.type}';
+        var payloadLike = {
+            toString: function() {
+                return '{"type":"alert","n":1}';
+            }
+        };
+        var data = { payload: payloadLike };
+        var expected = 'Type: alert';
+
+        var tinyTemplate = new TinyTemplate(template, ['payload'], true);
+        var result = tinyTemplate.render(data);
+
+        assert.strictEqual(result, expected);
+    });
+
+    it('should not String-coerce listed json_field when coerceJsonFields is false', function() {
+        var template = 'Type: ${payload.type}';
+        var payloadLike = {
+            toString: function() {
+                return '{"type":"alert"}';
+            }
+        };
+        var data = { payload: payloadLike };
+        var tinyTemplate = new TinyTemplate(template, ['payload'], false);
+        var result = tinyTemplate.render(data);
+
+        assert.strictEqual(result, 'Type: ');
+    });
+
+    it('should resolve_path with coerceJsonFields when String(value) is JSON text', function() {
+        var payloadLike = {
+            toString: function() {
+                return '{"type":"z"}';
+            }
+        };
+        var data = { payload: payloadLike };
+        assert.strictEqual(TinyTemplate.resolve_path(data, 'payload.type', ['payload'], true), 'z');
+    });
+
     it('should resolve_path when json_field value is already an object', function() {
         var data = { user: { children: [{ name: 'Susan' }] } };
         assert.strictEqual(TinyTemplate.resolve_path(data, 'user.children[0].name', ['children']), 'Susan');
