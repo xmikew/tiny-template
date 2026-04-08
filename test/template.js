@@ -277,11 +277,19 @@ describe('TinyTemplate', function() {
         var result = tinyTemplate.render(data);
 
         assert.strictEqual(result, expected);
-        var err = tinyTemplate.get_error_str(tinyTemplate.last_errors);
         var expected_error = "validate: Failed to replace all template variables. Got 1 errors:\nFailed to replace var ${user.name} in template";
 
-        assert.strictEqual(err, expected_error);
+        assert.strictEqual(tinyTemplate.get_error_str(tinyTemplate.last_errors), expected_error);
+        assert.strictEqual(tinyTemplate.get_error_str(), expected_error);
+        assert.strictEqual(tinyTemplate.get_error_str(null), expected_error);
+        assert.strictEqual(tinyTemplate.get_error_str(undefined), expected_error);
+    });
 
+    it('should return empty get_error_str when no errs arg and last_errors is empty', function() {
+        var tinyTemplate = new TinyTemplate('Hello ${name}');
+        assert.strictEqual(tinyTemplate.get_error_str(), '');
+        tinyTemplate.render({ name: 'Bob' });
+        assert.strictEqual(tinyTemplate.get_error_str(), '');
     });
 
 

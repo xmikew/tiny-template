@@ -123,7 +123,7 @@ Typical ServiceNow or app code uses the **instance** only:
 | `alias(shortName, dottedPath)` | Map `${alias:shortName}` segments to a longer path. | `// data = { user: { emails: ['a@b.com'] } }` (template uses `${alias:primary}`)<br>`t.alias('primary', 'user.emails[0]')` |
 | `interpolate_failure_as_blank` | If `true` (default), unresolved placeholders become empty text; if `false`, the `${…}` token is preserved in the output. | `// data = {}`, template has `${user.missing}`<br>`t.interpolate_failure_as_blank = false` |
 | `last_errors` | After `render` without `validate`, holds messages for placeholders that failed. | `// after render with unresolved placeholders`<br>`t.last_errors` |
-| `get_error_str(errs)` | Format error list for logging or throwing. | `// errs = t.last_errors`<br>`t.get_error_str(errs)` |
+| `get_error_str(errs?)` | Format error list for logging or throwing. If `errs` is omitted or `null`/`undefined`, uses `last_errors` from the most recent `render`. | `t.render(data);`<br>`t.get_error_str()` or `t.get_error_str(t.last_errors)` |
 
 Conditionals (`${if …}${else}${endif}`), null coalesce (`??`), literals in `${…}`, and path syntax are all handled inside `render`.
 

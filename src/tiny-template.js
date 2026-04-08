@@ -97,11 +97,15 @@ tinyTemplate.prototype = {
     },
 
     get_error_str: function(errs) {
-        var err = "";
-        if (errs.length > 0) {
-            err = "validate: Failed to replace all template variables. Got " + errs.length + " errors:\n";
-            err += errs.join("\n");
+        var list = errs;
+        if (list === undefined || list === null) {
+            list = this.last_errors;
         }
+        if (!list || list.length === 0) {
+            return "";
+        }
+        var err = "validate: Failed to replace all template variables. Got " + list.length + " errors:\n";
+        err += list.join("\n");
         return err;
     },
 
